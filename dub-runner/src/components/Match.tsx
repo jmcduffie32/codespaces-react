@@ -50,7 +50,7 @@ const Match = () => {
 
   function assignTeams(players: player[]): void {
     const playerCount = players.length;
-    let oddDogCount: number;
+    let oddDogCount: number = 0;
     switch (playerCount % 4) {
       case 0:
         oddDogCount = 0;
