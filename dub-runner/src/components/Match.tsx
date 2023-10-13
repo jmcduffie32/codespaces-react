@@ -29,6 +29,46 @@ function shuffle(array: any[]) {
   return array;
 }
 
+function ctpTotal(players: player[]): number {
+  return players.filter(p => p.ctp).length * 5;
+}
+
+function aceTotal(players: player[]): number {
+  return players.filter(p => p.ace).length * 2;
+}
+
+function bountyTotal(players: player[]): number {
+  return players.filter(p => p.bounty).length * 3;
+}
+
+function actionTotal(players: player[]): number {
+  return players.length * 5;
+}
+
+function cashTotal(players: player[]): number {
+  return ctpTotal(players) + aceTotal(players) + bountyTotal(players) + actionTotal(players);
+}
+
+function payouts(numTeams: number, total: number): number[] {
+  const payoutSpots = Math.floor(numTeams * 0.4)
+  // const fib = [1, 2, 3, 5, 8, 13, 21];
+  // _.range(1, payoutSpots + 1).map((s) => 10*fib[s]);
+
+  switch (payoutSpots) {
+    case 1:
+      return [ total ];
+    case 2:
+      return [ 10, total - 10 ];
+    case 3:
+      return [ 10, 20, total - 30 ]
+    case 4:
+      return [ 10, 20, 30, total - 60 ]
+    case 5:
+      return [ 10, 20, 30, total - 60 ]
+  }
+  return [];
+}
+
 const ODD_DOG = Infinity
 
 const Match = () => {
@@ -187,40 +227,43 @@ const Match = () => {
 
       <table className="table-auto">
         <thead>
-          <th>Name</th>
-          <th>CTP</th>
-          <th>ACE</th>
-          <th>BOUNTY</th>
-          <th>ODD</th>
+          <tr>
+            <th>Name</th>
+            <th>CTP</th>
+            <th>ACE</th>
+            <th>BOUNTY</th>
+            <th>ODD</th>
+          </tr>
         </thead>
-        {[ ...players ]
-          .sort((a, b) => a.team - b.team)
-          .map(p =>
-            <tr key={p.id}>
-              <td>{p.name}</td>
-              <td className="md:flex md:items-start mx-4">
-                <input
-                  checked={p.ctp}
-                  onChange={(e) => updatePlayer(p.id, { ctp: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
-              </td>
-              <td className="md:flex md:items-start mx-4">
-                <input
-                  checked={p.ace}
-                  onChange={(e) => updatePlayer(p.id, { ace: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
-              </td>
-              <td className="md:flex md:items-start mx-4">
-                <input
-                  checked={p.bounty}
-                  onChange={(e) => updatePlayer(p.id, { bounty: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
-              </td>
-              <td className="md:flex md:items-start mx-4">
-                <input
-                  checked={p.oddDog}
-                  onChange={(e) => updatePlayer(p.id, { oddDog: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
-              </td>
+        <tbody>
+          {[ ...players ]
+            .map(p =>
+              <tr key={p.id}>
+                <td>{p.name}</td>
+                <td className="md:flex md:items-start mx-4">
+                  <input
+                    checked={p.ctp}
+                    onChange={(e) => updatePlayer(p.id, { ctp: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
+                </td>
+                <td className="md:flex md:items-start mx-4">
+                  <input
+                    checked={p.ace}
+                    onChange={(e) => updatePlayer(p.id, { ace: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
+                </td>
+                <td className="md:flex md:items-start mx-4">
+                  <input
+                    checked={p.bounty}
+                    onChange={(e) => updatePlayer(p.id, { bounty: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
+                </td>
+                <td className="md:flex md:items-start mx-4">
+                  <input
+                    checked={p.oddDog}
+                    onChange={(e) => updatePlayer(p.id, { oddDog: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
+                </td>
 
-            </tr>
-          )}
+              </tr>
+            )}
+        </tbody>
       </table>
 
       <div className="block mt-4 md:mx-auto">
@@ -253,6 +296,22 @@ const Match = () => {
         </>
       }
 
+      <h2 className="mt-4 mb-2">Money Collected</h2>
+      <ul className="text-left">
+        <li>Total CTP: {ctpTotal(players)}</li>
+        <li>Total Ace: {aceTotal(players)}</li>
+        <li>Total Bounty: {bountyTotal(players)}</li>
+        <li>Total Cash: {cashTotal(players)}</li>
+      </ul>
+
+      <h2 className="mt-4 mb-2">Payouts</h2>
+      <ul className="text-left">
+        <li>CTP: {ctpTotal(players) / 5}</li>
+        <li>Bounty: {bountyTotal(players)}</li>
+        {payouts(teams.length, players.length*5).map((p, i) => (
+          <li key={i}>Place: {i + 1} Payout: {p}</li>
+        ))}
+      </ul>
     </div>
   )
 }
