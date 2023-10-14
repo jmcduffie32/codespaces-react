@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import _ from "lodash";
+import { XCircleIcon } from '@heroicons/react/24/outline';
 
 interface player {
   id: string;
@@ -113,6 +114,10 @@ const Match = () => {
     setPlayers((players) => players.map(p => p.id === id ? { ...p, ...patch } : p))
   }
 
+  function removePlayer(id: string): void {
+    setPlayers((players) => players.filter(p => p.id != id))
+  }
+
   function assignTeams(players: player[]): void {
     const playerCount = players.length;
     let oddDogCount: number = 0;
@@ -164,20 +169,21 @@ const Match = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <h1>DUBS</h1>
+    <div className="flex flex-col h-screen pb-4">
+      <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
 
-      <div className="mx-auto">
+<div className="md:flex md:flex-row">
+      <div className="md:w-1/3 mx-auto ml-0 mr-4">
         <form onSubmit={(e) => e.preventDefault()} className="bg-white shadow-md rounded px-8 pt-6 pb-8 mg-4">
-          <div className="md:flex md:items-center">
-            <div className="mb-4 md:flex md:items-center md:mr-4">
-              <div className="md:w-1/3">
+          <div className="">
+            <div className="mb-4 md:mr-4">
+              <div className="">
                 <label className="block text-left text-gray-700 text-sm font-bold mb-2"
                   htmlFor="name">
                   Name
                 </label>
               </div>
-              <div className="md:w-2/3">
+              <div className="">
                 <input id="name"
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   value={name}
@@ -187,7 +193,7 @@ const Match = () => {
             </div>
 
 
-            <div className="mb-2 md:flex md:items-start md:mx-4">
+            <div className="mb-2">
               <label htmlFor="" className="block text-left text-gray-500 font-bold">
                 <input
                   checked={ctp}
@@ -196,7 +202,7 @@ const Match = () => {
               </label>
             </div>
 
-            <div className="mb-2 md:flex md:items-start md:mx-4">
+            <div className="mb-2">
               <label htmlFor="" className="block text-left text-gray-500 font-bold">
                 <input
                   checked={ace}
@@ -205,7 +211,7 @@ const Match = () => {
               </label>
             </div>
 
-            <div className="mb-2 md:flex md:items-start md:mx-4">
+            <div className="mb-2">
               <label htmlFor="" className="block text-left text-gray-500 font-bold">
                 <input
                   checked={bounty}
@@ -214,7 +220,7 @@ const Match = () => {
               </label>
             </div>
 
-            <div className="mb-4 md:flex md:items-start md:mx-4">
+            <div className="mb-4">
               <label htmlFor="" className="block text-left text-gray-500 font-bold">
                 <input
                   checked={oddDog}
@@ -235,11 +241,9 @@ const Match = () => {
         </form>
       </div>
 
-
-
-      <h2 className="my-2">Registration List</h2>
-
-      <table className="table-auto">
+<div className="md:w-2/3">
+      <h2 className="pb-4 my-4 border-b-2 border-b-grey text-xl font-bold">Registration List</h2>
+      <table className="table-auto w-full">
         <thead>
           <tr>
             <th>Name</th>
@@ -247,6 +251,7 @@ const Match = () => {
             <th>ACE</th>
             <th>BOUNTY</th>
             <th>ODD</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -254,33 +259,39 @@ const Match = () => {
             .map(p =>
               <tr key={p.id}>
                 <td>{p.name}</td>
-                <td className="md:flex md:items-start mx-4">
+                <td className="">
                   <input
                     checked={p.ctp}
                     onChange={(e) => updatePlayer(p.id, { ctp: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
                 </td>
-                <td className="md:flex md:items-start mx-4">
+                <td className="">
                   <input
                     checked={p.ace}
                     onChange={(e) => updatePlayer(p.id, { ace: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
                 </td>
-                <td className="md:flex md:items-start mx-4">
+                <td className="">
                   <input
                     checked={p.bounty}
                     onChange={(e) => updatePlayer(p.id, { bounty: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
                 </td>
-                <td className="md:flex md:items-start mx-4">
+                <td className="">
                   <input
                     checked={p.oddDog}
                     onChange={(e) => updatePlayer(p.id, { oddDog: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
                 </td>
-
+                <td>
+                  <XCircleIcon className="h-6 w-6 text-gray-500" onClick={() => removePlayer(p.id)} />
+                </td>
               </tr>
             )}
         </tbody>
       </table>
+</div>
+      </div>
 
-      <div className="block mt-4 md:mx-auto">
+
+      <h2 className="pb-4 mt-4  border-b-2 border-b-gray text-xl font-bold">Teams</h2>
+      <div className="block my-4 md:mx-auto">
         <button
           type="button"
           onClick={() => {
@@ -289,12 +300,8 @@ const Match = () => {
           className="bg-blue-500 text-white w-full py-1 px-4 rounded">ASSIGN TEAMS</button>
       </div>
 
-
-
-
       {teams.length > 0 &&
         <>
-          <h2 className="my-2">Teams</h2>
           <div className="flex flex-wrap justify-center">
             {[ ...teams ]
               .sort((a, b) => a[ 0 ].team - b[ 0 ].team)
@@ -310,20 +317,20 @@ const Match = () => {
         </>
       }
 
-      <h2 className="mt-4 mb-2">Money Collected</h2>
+      <h2 className="pb-4 my-4 border-b-2 border-b-gray text-xl font-bold">Money Collected</h2>
       <ul className="text-left">
-        <li>Total CTP: {ctpTotal(players)}</li>
-        <li>Total Ace: {aceTotal(players)}</li>
-        <li>Total Bounty: {bountyTotal(players)}</li>
-        <li>Total Cash: {cashTotal(players)}</li>
+        <li>Total CTP: ${ctpTotal(players)}</li>
+        <li>Total Ace: ${aceTotal(players)}</li>
+        <li>Total Bounty: ${bountyTotal(players)}</li>
+        <li>Total Cash: ${cashTotal(players)}</li>
       </ul>
 
-      <h2 className="mt-4 mb-2">Payouts</h2>
-      <ul className="text-left">
-        <li>CTP: {ctpTotal(players) / 5}</li>
-        <li>Bounty: {bountyTotal(players)}</li>
+      <h2 className="pb-4 my-4 border-b-2 border-b-gray text-xl font-bold">Payouts</h2>
+      <ul className="text-left pb-8">
+        <li>CTP: ${ctpTotal(players) / 5}</li>
+        <li>Bounty: ${bountyTotal(players)}</li>
         {payouts(teams.length, players.length*5).map((p, i) => (
-          <li key={i}>Place: {i + 1} Payout: {p}</li>
+          <li key={i}>Place: {i + 1} Payout: ${p}</li>
         ))}
       </ul>
     </div>
