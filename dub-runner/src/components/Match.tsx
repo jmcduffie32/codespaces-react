@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import _ from "lodash";
 
 interface player {
@@ -69,11 +69,25 @@ function payouts(numTeams: number, total: number): number[] {
   return [];
 }
 
-const ODD_DOG = Infinity
+const ODD_DOG = 1000;
 
 const Match = () => {
-  const [ players, setPlayers ] = useState<player[]>([]);
-  const [ teams, setTeams ] = useState<player[][]>([]);
+  const [ players, setPlayers ] = useState<player[]>(() => {
+    const saved = localStorage.getItem('players');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [ teams, setTeams ] = useState<player[][]>(() => {
+    const saved = localStorage.getItem('teams');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('players', JSON.stringify(players));
+  }, [players])
+
+  useEffect(() => {
+    localStorage.setItem('teams', JSON.stringify(teams));
+  }, [teams])
 
 
   const [ name, setname ] = useState("");
