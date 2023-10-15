@@ -1,16 +1,8 @@
 import { useEffect, useState } from "react";
 import _ from "lodash";
 import { XCircleIcon } from '@heroicons/react/24/outline';
-
-interface player {
-  id: string;
-  name: string;
-  ctp: boolean;
-  ace: boolean;
-  bounty: boolean;
-  oddDog: boolean;
-  team: number;
-}
+import { Player } from '../interfaces/Player';
+import { ODD_DOG } from '../constants';
 
 function shuffle(array: any[]) {
   let currentIndex = array.length, randomIndex;
@@ -30,23 +22,23 @@ function shuffle(array: any[]) {
   return array;
 }
 
-function ctpTotal(players: player[]): number {
+function ctpTotal(players: Player[]): number {
   return players.filter(p => p.ctp).length * 5;
 }
 
-function aceTotal(players: player[]): number {
+function aceTotal(players: Player[]): number {
   return players.filter(p => p.ace).length * 2;
 }
 
-function bountyTotal(players: player[]): number {
+function bountyTotal(players: Player[]): number {
   return players.filter(p => p.bounty).length * 3;
 }
 
-function actionTotal(players: player[]): number {
+function actionTotal(players: Player[]): number {
   return players.length * 5;
 }
 
-function cashTotal(players: player[]): number {
+function cashTotal(players: Player[]): number {
   return ctpTotal(players) + aceTotal(players) + bountyTotal(players) + actionTotal(players);
 }
 
@@ -70,14 +62,12 @@ function payouts(numTeams: number, total: number): number[] {
   return [];
 }
 
-const ODD_DOG = 1000;
-
 const Match = () => {
-  const [ players, setPlayers ] = useState<player[]>(() => {
+  const [ players, setPlayers ] = useState<Player[]>(() => {
     const saved = localStorage.getItem('players');
     return saved ? JSON.parse(saved) : [];
   });
-  const [ teams, setTeams ] = useState<player[][]>(() => {
+  const [ teams, setTeams ] = useState<Player[][]>(() => {
     const saved = localStorage.getItem('teams');
     return saved ? JSON.parse(saved) : [];
   });
@@ -110,7 +100,7 @@ const Match = () => {
     reset();
   }
 
-  function updatePlayer(id: string, patch: Partial<player>): void {
+  function updatePlayer(id: string, patch: Partial<Player>): void {
     setPlayers((players) => players.map(p => p.id === id ? { ...p, ...patch } : p))
   }
 
@@ -118,7 +108,7 @@ const Match = () => {
     setPlayers((players) => players.filter(p => p.id != id))
   }
 
-  function assignTeams(players: player[]): void {
+  function assignTeams(players: Player[]): void {
     const playerCount = players.length;
     let oddDogCount: number = 0;
     switch (playerCount % 4) {
