@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import _ from "lodash";
-import { XCircleIcon } from '@heroicons/react/24/outline';
+import { SignalIcon, TableCellsIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { Player } from '../interfaces/Player';
 import { ODD_DOG } from '../constants';
+import { supabase } from '../supabase';
+import { json } from 'react-router-dom';
 
 function shuffle(array: any[]) {
   let currentIndex = array.length, randomIndex;
@@ -63,6 +65,8 @@ function payouts(numTeams: number, total: number): number[] {
 }
 
 const Match = () => {
+  const [matchId, setMatchId] = useState<number>(1)
+  const [userId, setUserId] = useState<string>()
   const [ players, setPlayers ] = useState<Player[]>(() => {
     const saved = localStorage.getItem('players');
     return saved ? JSON.parse(saved) : [];
@@ -72,6 +76,55 @@ const Match = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  async function getRound() {
+    const data = (await supabase.from("round").select().eq('id', matchId)).data;
+    if (data && data[0]) {
+      const roundData = JSON.parse(data[0].data)
+      setPlayers(roundData.players)
+      setTeams(roundData.teams)
+    }
+    console.log(data)
+  }
+
+  async function signIn() {
+    const email = prompt("email") as string
+    const password = prompt("password") as string
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password
+    })
+    if (error) {
+      console.log("ERROR LOGGING IN")
+      return;
+    }
+    setUserId(data.user.id)
+  }
+
+  useEffect(() => {
+    if (userId) {
+      return;
+    }
+
+    signIn()
+  }, [])
+
+  useEffect(() => {
+    if (matchId) {
+      getRound()
+    }
+  }, [matchId])
+
+  async function updateDB() {
+    await supabase.from("round").update({data: JSON.stringify({players: players, teams: teams})}).eq('id', matchId)
+  }
+  
+  async function createMatch() {
+    const { data } = await supabase.from("round").insert({data: JSON.stringify({players: players, teams: teams})}).select()
+    if (data&&data[0]) {
+      setMatchId(data[0].id)
+    }
+  }
+
   useEffect(() => {
     localStorage.setItem('players', JSON.stringify(players));
   }, [players])
@@ -79,6 +132,15 @@ const Match = () => {
   useEffect(() => {
     localStorage.setItem('teams', JSON.stringify(teams));
   }, [teams])
+
+  useEffect(() => {
+    if (!userId) return;
+    if (matchId) {
+      updateDB()
+    } else {
+      createMatch()
+    }
+  }, [teams, players])
 
 
   const [ name, setname ] = useState("");
