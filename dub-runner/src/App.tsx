@@ -1,5 +1,6 @@
 import './App.css'
 import Match from './components/Match'
+import AdminMatch from './components/AdminMatch'
 import {
   createBrowserRouter,
   RouterProvider
@@ -13,8 +14,8 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />
   },
   {
-    path: "/matches",
-    element: <Match />,
+    path: "/admin",
+    element: <AdminMatch />,
     errorElement: <ErrorPage />
   },
   {
