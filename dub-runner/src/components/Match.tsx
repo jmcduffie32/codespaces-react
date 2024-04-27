@@ -46,7 +46,7 @@ function payouts(numTeams: number, total: number): number[] {
 }
 
 const Match = () => {
-  const [ matchId, setMatchId ] = useState<number>(1)
+  const [ matchId, _setMatchId ] = useState<number>(1)
   const [ players, setPlayers ] = useState<Player[]>(() => {
     const saved = localStorage.getItem('players');
     return saved ? JSON.parse(saved) : [];
@@ -66,7 +66,7 @@ const Match = () => {
     console.log(data)
   }
 
-  const handleInserts = (payload) => {
+  const handleInserts = (payload: any) => {
     console.log('Change received!', payload)
     const id = payload.new.id
     const data = payload.new.data

@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import _ from "lodash";
-import { SignalIcon, TableCellsIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { XCircleIcon } from '@heroicons/react/24/outline';
 import { Player } from '../interfaces/Player';
 import { ODD_DOG } from '../constants';
 import { supabase } from '../supabase';
-import { json } from 'react-router-dom';
 
 function shuffle(array: any[]) {
   let currentIndex = array.length, randomIndex;
