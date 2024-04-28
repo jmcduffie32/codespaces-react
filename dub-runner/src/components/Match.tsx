@@ -46,7 +46,8 @@ function payouts(numTeams: number, total: number): number[] {
 }
 
 const Match = () => {
-  const [ matchId, _setMatchId ] = useState<number>(1)
+  const [ matchId, setMatchId ] = useState<number>()
+  const [ matchCode, setCode ] = useState<string>('')
   const [ players, setPlayers ] = useState<Player[]>(() => {
     const saved = localStorage.getItem('players');
     return saved ? JSON.parse(saved) : [];
@@ -57,8 +58,11 @@ const Match = () => {
   });
 
   async function getRound() {
-    const data = (await supabase.from("round").select().eq('id', matchId)).data;
+    // const data = (await supabase.from("round").select().eq('id', matchId)).data;
+    if (matchCode.trim() == '') return;
+    const data = (await supabase.from("round").select().eq('code', matchCode)).data;
     if (data && data[ 0 ]) {
+      setMatchId(data[ 0 ].id)
       const roundData = JSON.parse(data[ 0 ].data)
       setPlayers(roundData.players)
       setTeams(roundData.teams)
@@ -85,12 +89,6 @@ const Match = () => {
   }, [matchId])
 
   useEffect(() => {
-    if (matchId) {
-      getRound()
-    }
-  }, [ matchId ])
-
-  useEffect(() => {
     localStorage.setItem('players', JSON.stringify(players));
   }, [ players ])
 
@@ -98,7 +96,29 @@ const Match = () => {
     localStorage.setItem('teams', JSON.stringify(teams));
   }, [ teams ])
 
-  return (
+  return !matchId ?
+  (
+    <div className="flex flex-col h-screen pb-4">
+      <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
+      <div className="flex flex-col items-center">
+        <label className="text-lg font-bold">Enter Match Code</label>
+        <input
+          className="border border-gray-400 rounded p-2"
+          type="text"
+          value={matchCode}
+          onChange={(e) => setCode(e.target.value)}
+        />
+        <button
+          className="bg-blue-500 text-white rounded p-2 mt-2"
+          onClick={() => getRound()}
+        >
+          Submit
+        </button>
+      </div>
+    </div>
+  )
+  :
+  (
     <div className="flex flex-col h-screen pb-4">
       <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
 

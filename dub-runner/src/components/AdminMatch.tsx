@@ -64,10 +64,13 @@ function payouts(numTeams: number, total: number): number[] {
 }
 
 const AdminMatch = () => {
-  const [ username, setUsername ] = useState<string>()
-  const [ password, setPassword ] = useState<string>()
-  const [ matchId, setMatchId ] = useState<number>(1)
+  const [ username, setUsername ] = useState<string>('')
+  const [ password, setPassword ] = useState<string>('')
+  const [ matchCode, setCode ] = useState<string>('')
+
+  const [ matchId, setMatchId ] = useState<number>()
   const [ userId, setUserId ] = useState<string>()
+
   const [ players, setPlayers ] = useState<Player[]>(() => {
     const saved = localStorage.getItem('players');
     return saved ? JSON.parse(saved) : [];
@@ -77,14 +80,19 @@ const AdminMatch = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  async function getRound() {
-    const data = (await supabase.from("round").select().eq('id', matchId)).data;
+  async function getOrCreateRound() {
+    if (matchCode.trim() == '') return;
+    let data = (await supabase.from("round").select().eq('code', matchCode)).data;
+    if (!data || !data[ 0 ]) {
+      data = (await supabase.from("round").insert({ code: matchCode, data: JSON.stringify({ players: [], teams: [] }) }).select()).data
+    }
     if (data && data[ 0 ]) {
+      setMatchId(data[ 0 ].id)
       const roundData = JSON.parse(data[ 0 ].data)
       setPlayers(roundData.players)
       setTeams(roundData.teams)
     }
-    console.log(data)
+
   }
 
   async function signIn() {
@@ -100,21 +108,8 @@ const AdminMatch = () => {
     setUserId(data.user.id)
   }
 
-  useEffect(() => {
-    if (matchId) {
-      getRound()
-    }
-  }, [ matchId ])
-
   async function updateDB() {
     await supabase.from("round").update({ data: JSON.stringify({ players: players, teams: teams }) }).eq('id', matchId)
-  }
-
-  async function createMatch() {
-    const { data } = await supabase.from("round").insert({ data: JSON.stringify({ players: players, teams: teams }) }).select()
-    if (data && data[ 0 ]) {
-      setMatchId(data[ 0 ].id)
-    }
   }
 
   useEffect(() => {
@@ -126,12 +121,8 @@ const AdminMatch = () => {
   }, [ teams ])
 
   useEffect(() => {
-    if (!userId) return;
-    if (matchId) {
-      updateDB()
-    } else {
-      createMatch()
-    }
+    if (!userId || !matchId) return;
+    updateDB()
   }, [ teams, players ])
 
 
@@ -218,10 +209,10 @@ const AdminMatch = () => {
         <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
         <div className="flex flex-col items-center justify-center h-full">
           <input className="mb-4 px-4 py-2 border border-gray-300 rounded"
-            type="text" name="username" id="username" onChange={e => setUsername(e.target.value)} />
+            type="text" name="username" value={username} id="username" onChange={e => setUsername(e.target.value)} />
           <input
             className="mb-4 px-4 py-2 border border-gray-300 rounded"
-            type="password" name="password" id="password" onChange={e => setPassword(e.target.value)} />
+            type="password" name="password" value={password} id="password" onChange={e => setPassword(e.target.value)} />
           <button
             onClick={() => {
               signIn()
@@ -230,173 +221,196 @@ const AdminMatch = () => {
         </div>
       </div>
     )
-     : (
-    <div className="flex flex-col h-screen pb-4">
-      <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
-
-      <div className="md:flex md:flex-row">
-        <div className="md:w-1/3 mx-auto ml-0 mr-4">
-          <form onSubmit={(e) => e.preventDefault()} className="bg-white shadow-md rounded px-8 pt-6 pb-8 mg-4">
-            <div className="">
-              <div className="mb-4 md:mr-4">
-                <div className="">
-                  <label className="block text-left text-gray-700 text-sm font-bold mb-2"
-                    htmlFor="name">
-                    Name
-                  </label>
-                </div>
-                <div className="">
-                  <input id="name"
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    value={name}
-                    onChange={(e) => setname(e.target.value)}
-                    type="text" />
-                </div>
-              </div>
-
-
-              <div className="mb-2">
-                <label htmlFor="" className="block text-left text-gray-500 font-bold">
-                  <input
-                    checked={ctp}
-                    onChange={(e) => setCtp(e.target.checked)} type="checkbox" className="mr-2 leading-tight" />
-                  <span className="text-gray-800">CTP</span>
-                </label>
-              </div>
-
-              <div className="mb-2">
-                <label htmlFor="" className="block text-left text-gray-500 font-bold">
-                  <input
-                    checked={ace}
-                    onChange={(e) => setAce(e.target.checked)} type="checkbox" className="mr-2 leading-tight" />
-                  <span className="text-gray-800">Ace</span>
-                </label>
-              </div>
-
-              <div className="mb-2">
-                <label htmlFor="" className="block text-left text-gray-500 font-bold">
-                  <input
-                    checked={bounty}
-                    onChange={(e) => setBounty(e.target.checked)} type="checkbox" className="mr-2 leading-tight" />
-                  <span className="text-gray-800">Bounty</span>
-                </label>
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="" className="block text-left text-gray-500 font-bold">
-                  <input
-                    checked={oddDog}
-                    onChange={(e) => setOddDog(e.target.checked)} type="checkbox" className="mr-2 leading-tight" />
-                  <span className="text-gray-800">Chance to be Odd Dog?</span>
-                </label>
-              </div>
-
+    : (
+      !matchId ? (
+        (
+          <div className="flex flex-col h-screen pb-4">
+            <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
+            <div className="flex flex-col items-center">
+              <label className="text-lg font-bold">Enter Match Code</label>
+              <input
+                className="border border-gray-400 rounded p-2"
+                id='matchCode'
+                type="text"
+                value={matchCode}
+                onChange={(e) => setCode(e.target.value)}
+              />
               <button
-                type="button"
-                onClick={() => {
-                  addPlayer(name, ctp, ace, bounty, oddDog)
-                }}
-                className="bg-blue-500 text-white w-full py-1 md:px-4 rounded">ADD</button>
+                className="bg-blue-500 text-white rounded p-2 mt-2"
+                onClick={() => getOrCreateRound()}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        )
+      ) : (
+        <div className="flex flex-col h-screen pb-4">
+          <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
+
+          <div className="md:flex md:flex-row">
+            <div className="md:w-1/3 mx-auto ml-0 mr-4">
+              <form onSubmit={(e) => e.preventDefault()} className="bg-white shadow-md rounded px-8 pt-6 pb-8 mg-4">
+                <div className="">
+                  <div className="mb-4 md:mr-4">
+                    <div className="">
+                      <label className="block text-left text-gray-700 text-sm font-bold mb-2"
+                        htmlFor="name">
+                        Name
+                      </label>
+                    </div>
+                    <div className="">
+                      <input id="name"
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        value={name}
+                        onChange={(e) => setname(e.target.value)}
+                        type="text" />
+                    </div>
+                  </div>
+
+
+                  <div className="mb-2">
+                    <label htmlFor="" className="block text-left text-gray-500 font-bold">
+                      <input
+                        checked={ctp}
+                        onChange={(e) => setCtp(e.target.checked)} type="checkbox" className="mr-2 leading-tight" />
+                      <span className="text-gray-800">CTP</span>
+                    </label>
+                  </div>
+
+                  <div className="mb-2">
+                    <label htmlFor="" className="block text-left text-gray-500 font-bold">
+                      <input
+                        checked={ace}
+                        onChange={(e) => setAce(e.target.checked)} type="checkbox" className="mr-2 leading-tight" />
+                      <span className="text-gray-800">Ace</span>
+                    </label>
+                  </div>
+
+                  <div className="mb-2">
+                    <label htmlFor="" className="block text-left text-gray-500 font-bold">
+                      <input
+                        checked={bounty}
+                        onChange={(e) => setBounty(e.target.checked)} type="checkbox" className="mr-2 leading-tight" />
+                      <span className="text-gray-800">Bounty</span>
+                    </label>
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="" className="block text-left text-gray-500 font-bold">
+                      <input
+                        checked={oddDog}
+                        onChange={(e) => setOddDog(e.target.checked)} type="checkbox" className="mr-2 leading-tight" />
+                      <span className="text-gray-800">Chance to be Odd Dog?</span>
+                    </label>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      addPlayer(name, ctp, ace, bounty, oddDog)
+                    }}
+                    className="bg-blue-500 text-white w-full py-1 md:px-4 rounded">ADD</button>
+                </div>
+
+
+              </form>
             </div>
 
-
-          </form>
-        </div>
-
-        <div className="md:w-2/3">
-          <h2 className="pb-4 my-4 border-b-2 border-b-grey text-xl font-bold">Registration List</h2>
-          <table className="table-auto w-full">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>CTP</th>
-                <th>ACE</th>
-                <th>BOUNTY</th>
-                <th>ODD</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {[ ...players ]
-                .map(p =>
-                  <tr key={p.id}>
-                    <td>{p.name}</td>
-                    <td className="">
-                      <input
-                        checked={p.ctp}
-                        onChange={(e) => updatePlayer(p.id, { ctp: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
-                    </td>
-                    <td className="">
-                      <input
-                        checked={p.ace}
-                        onChange={(e) => updatePlayer(p.id, { ace: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
-                    </td>
-                    <td className="">
-                      <input
-                        checked={p.bounty}
-                        onChange={(e) => updatePlayer(p.id, { bounty: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
-                    </td>
-                    <td className="">
-                      <input
-                        checked={p.oddDog}
-                        onChange={(e) => updatePlayer(p.id, { oddDog: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
-                    </td>
-                    <td>
-                      <XCircleIcon className="h-6 w-6 text-gray-500" onClick={() => removePlayer(p.id)} />
-                    </td>
+            <div className="md:w-2/3">
+              <h2 className="pb-4 my-4 border-b-2 border-b-grey text-xl font-bold">Registration List</h2>
+              <table className="table-auto w-full">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>CTP</th>
+                    <th>ACE</th>
+                    <th>BOUNTY</th>
+                    <th>ODD</th>
+                    <th></th>
                   </tr>
-                )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-
-      <h2 className="pb-4 mt-4  border-b-2 border-b-gray text-xl font-bold">Teams</h2>
-      <div className="block my-4 md:mx-auto">
-        <button
-          type="button"
-          onClick={() => {
-            assignTeams(players);
-          }}
-          className="bg-blue-500 text-white w-full py-1 px-4 rounded">ASSIGN TEAMS</button>
-      </div>
-
-      {teams.length > 0 &&
-        <>
-          <div className="flex flex-wrap justify-center">
-            {[ ...teams ]
-              .sort((a, b) => a[ 0 ].team - b[ 0 ].team)
-              .map(players =>
-                <div className="w-2/5 shadow rounded m-2 p-2" key={players[ 0 ].team}>
-                  <div className='font-bold'>{players[ 0 ].team === ODD_DOG ? "Odd Dog" : players[ 0 ].team}</div>
-                  <div>{players[ 0 ].name}</div>
-                  <div>{players[ 1 ]?.name || ""}</div>
-                </div>
-              )}
-
+                </thead>
+                <tbody>
+                  {[ ...players ]
+                    .map(p =>
+                      <tr key={p.id}>
+                        <td>{p.name}</td>
+                        <td className="">
+                          <input
+                            checked={p.ctp}
+                            onChange={(e) => updatePlayer(p.id, { ctp: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
+                        </td>
+                        <td className="">
+                          <input
+                            checked={p.ace}
+                            onChange={(e) => updatePlayer(p.id, { ace: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
+                        </td>
+                        <td className="">
+                          <input
+                            checked={p.bounty}
+                            onChange={(e) => updatePlayer(p.id, { bounty: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
+                        </td>
+                        <td className="">
+                          <input
+                            checked={p.oddDog}
+                            onChange={(e) => updatePlayer(p.id, { oddDog: e.target.checked })} type="checkbox" className="mr-2 leading-tight" />
+                        </td>
+                        <td>
+                          <XCircleIcon className="h-6 w-6 text-gray-500" onClick={() => removePlayer(p.id)} />
+                        </td>
+                      </tr>
+                    )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </>
-      }
 
-      <h2 className="pb-4 my-4 border-b-2 border-b-gray text-xl font-bold">Money Collected</h2>
-      <ul className="text-left">
-        <li>Total CTP: ${ctpTotal(players)}</li>
-        <li>Total Ace: ${aceTotal(players)}</li>
-        <li>Total Bounty: ${bountyTotal(players)}</li>
-        <li>Total Cash: ${cashTotal(players)}</li>
-      </ul>
 
-      <h2 className="pb-4 my-4 border-b-2 border-b-gray text-xl font-bold">Payouts</h2>
-      <ul className="text-left pb-8">
-        <li>CTP: ${ctpTotal(players) / 5}</li>
-        <li>Bounty: ${bountyTotal(players)}</li>
-        {payouts(teams.length, players.length * 5).map((p, i) => (
-          <li key={i}>Place: {i + 1} Payout: ${p}</li>
-        ))}
-      </ul>
-    </div>
-  )
+          <h2 className="pb-4 mt-4  border-b-2 border-b-gray text-xl font-bold">Teams</h2>
+          <div className="block my-4 md:mx-auto">
+            <button
+              type="button"
+              onClick={() => {
+                assignTeams(players);
+              }}
+              className="bg-blue-500 text-white w-full py-1 px-4 rounded">ASSIGN TEAMS</button>
+          </div>
+
+          {teams.length > 0 &&
+            <>
+              <div className="flex flex-wrap justify-center">
+                {[ ...teams ]
+                  .sort((a, b) => a[ 0 ].team - b[ 0 ].team)
+                  .map(players =>
+                    <div className="w-2/5 shadow rounded m-2 p-2" key={players[ 0 ].team}>
+                      <div className='font-bold'>{players[ 0 ].team === ODD_DOG ? "Odd Dog" : players[ 0 ].team}</div>
+                      <div>{players[ 0 ].name}</div>
+                      <div>{players[ 1 ]?.name || ""}</div>
+                    </div>
+                  )}
+
+              </div>
+            </>
+          }
+
+          <h2 className="pb-4 my-4 border-b-2 border-b-gray text-xl font-bold">Money Collected</h2>
+          <ul className="text-left">
+            <li>Total CTP: ${ctpTotal(players)}</li>
+            <li>Total Ace: ${aceTotal(players)}</li>
+            <li>Total Bounty: ${bountyTotal(players)}</li>
+            <li>Total Cash: ${cashTotal(players)}</li>
+          </ul>
+
+          <h2 className="pb-4 my-4 border-b-2 border-b-gray text-xl font-bold">Payouts</h2>
+          <ul className="text-left pb-8">
+            <li>CTP: ${ctpTotal(players) / 5}</li>
+            <li>Bounty: ${bountyTotal(players)}</li>
+            {payouts(teams.length, players.length * 5).map((p, i) => (
+              <li key={i}>Place: {i + 1} Payout: ${p}</li>
+            ))}
+          </ul>
+        </div>
+      ))
 }
 
 export default AdminMatch;
