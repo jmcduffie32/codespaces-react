@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import _, { get } from "lodash";
+import _ from "lodash";
 import { XCircleIcon } from '@heroicons/react/24/outline';
 import { Player } from '../interfaces/Player';
 import { ODD_DOG } from '../constants';
@@ -44,25 +44,25 @@ function cashTotal(players: Player[]): number {
   return ctpTotal(players) + aceTotal(players) + bountyTotal(players) + actionTotal(players);
 }
 
-function payouts(numTeams: number, total: number): number[] {
-  const payoutSpots = Math.floor(numTeams * 0.4)
-  // const fib = [1, 2, 3, 5, 8, 13, 21];
-  // _.range(1, payoutSpots + 1).map((s) => 10*fib[s]);
+// function payouts(numTeams: number, total: number): number[] {
+//   const payoutSpots = Math.floor(numTeams * 0.4)
+//   // const fib = [1, 2, 3, 5, 8, 13, 21];
+//   // _.range(1, payoutSpots + 1).map((s) => 10*fib[s]);
 
-  switch (payoutSpots) {
-    case 1:
-      return [ total ];
-    case 2:
-      return [ 10, total - 10 ];
-    case 3:
-      return [ 10, 20, total - 30 ]
-    case 4:
-      return [ 10, 20, 30, total - 60 ]
-    case 5:
-      return [ 10, 20, 30, total - 60 ]
-  }
-  return [];
-}
+//   switch (payoutSpots) {
+//     case 1:
+//       return [ total ];
+//     case 2:
+//       return [ 10, total - 10 ];
+//     case 3:
+//       return [ 10, 20, total - 30 ]
+//     case 4:
+//       return [ 10, 20, 30, total - 60 ]
+//     case 5:
+//       return [ 10, 20, 30, total - 60 ]
+//   }
+//   return [];
+// }
 
 const AdminMatch = () => {
   const [ username, setUsername ] = useState<string>('')
@@ -81,7 +81,7 @@ const AdminMatch = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  async function getOrCreateRound(code) {
+  async function getOrCreateRound(code: string = '') {
     if (code.trim() == '') return;
     let data = (await supabase.from("round").select().eq('code', code)).data;
     if (!data || !data[ 0 ]) {

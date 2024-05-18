@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import _, { round } from "lodash";
+import _ from "lodash";
 import { supabase } from '../supabase';
 
 function RoundList ({onRoundSelected}: {onRoundSelected: Function}) {
