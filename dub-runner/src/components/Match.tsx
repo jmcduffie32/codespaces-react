@@ -3,6 +3,7 @@ import _ from "lodash";
 import { Player } from '../interfaces/Player';
 import { ODD_DOG } from '../constants';
 import { supabase } from '../supabase';
+import RoundList from './RoundList';
 
 
 function ctpTotal(players: Player[]): number {
@@ -57,10 +58,10 @@ const Match = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  async function getRound() {
+  async function getRound(code: string = '') {
     // const data = (await supabase.from("round").select().eq('id', matchId)).data;
-    if (matchCode.trim() == '') return;
-    const data = (await supabase.from("round").select().eq('code', matchCode)).data;
+    if (code.trim() == '') return;
+    const data = (await supabase.from("round").select().eq('code', code)).data;
     if (data && data[ 0 ]) {
       setMatchId(data[ 0 ].id)
       const roundData = JSON.parse(data[ 0 ].data)
@@ -104,16 +105,24 @@ const Match = () => {
         <label className="text-lg font-bold">Enter Match Code</label>
         <input
           className="border border-gray-400 rounded p-2"
+          placeholder="Match Code"
           type="text"
           value={matchCode}
           onChange={(e) => setCode(e.target.value)}
         />
         <button
           className="bg-blue-500 text-white rounded p-2 mt-2"
-          onClick={() => getRound()}
+          onClick={() => getRound(matchCode)}
         >
           Submit
         </button>
+      </div>
+      <div className="flex flex-col items-center">
+        <p className="mb-2 mt-2">Or select from the list below</p>
+        <RoundList onRoundSelected={(selectedId: string) => {
+          setCode(selectedId);
+          getRound(selectedId);
+        }} />
       </div>
     </div>
   )
@@ -207,9 +216,9 @@ const Match = () => {
       <ul className="text-left pb-8">
         <li>CTP: ${ctpTotal(players) / 5}</li>
         <li>Bounty: ${bountyTotal(players)}</li>
-        {payouts(teams.length, players.length * 5).map((p, i) => (
+        {/* {payouts(teams.length, players.length * 5).map((p, i) => (
           <li key={i}>Place: {i + 1} Payout: ${p}</li>
-        ))}
+        ))} */}
       </ul>
     </div>
   )

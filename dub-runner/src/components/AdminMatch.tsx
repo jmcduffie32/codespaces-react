@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import _ from "lodash";
+import _, { get } from "lodash";
 import { XCircleIcon } from '@heroicons/react/24/outline';
 import { Player } from '../interfaces/Player';
 import { ODD_DOG } from '../constants';
 import { supabase } from '../supabase';
+import RoundList from './RoundList';
 
 function shuffle(array: any[]) {
   let currentIndex = array.length, randomIndex;
@@ -80,11 +81,11 @@ const AdminMatch = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  async function getOrCreateRound() {
-    if (matchCode.trim() == '') return;
-    let data = (await supabase.from("round").select().eq('code', matchCode)).data;
+  async function getOrCreateRound(code) {
+    if (code.trim() == '') return;
+    let data = (await supabase.from("round").select().eq('code', code)).data;
     if (!data || !data[ 0 ]) {
-      data = (await supabase.from("round").insert({ code: matchCode, data: JSON.stringify({ players: [], teams: [] }) }).select()).data
+      data = (await supabase.from("round").insert({ code: code, data: JSON.stringify({ players: [], teams: [] }) }).select()).data
     }
     if (data && data[ 0 ]) {
       setMatchId(data[ 0 ].id)
@@ -209,8 +210,10 @@ const AdminMatch = () => {
         <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
         <div className="flex flex-col items-center justify-center h-full">
           <input className="mb-4 px-4 py-2 border border-gray-300 rounded"
+            placeholder="Username"
             type="text" name="username" value={username} id="username" onChange={e => setUsername(e.target.value)} />
           <input
+            placeholder="Password"
             className="mb-4 px-4 py-2 border border-gray-300 rounded"
             type="password" name="password" value={password} id="password" onChange={e => setPassword(e.target.value)} />
           <button
@@ -228,19 +231,29 @@ const AdminMatch = () => {
             <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
             <div className="flex flex-col items-center">
               <label className="text-lg font-bold">Enter Match Code</label>
+              <p className="mt-2 mb-2 text-sm text-gray-400">Enter a non-existent code to create a new round</p>
               <input
                 className="border border-gray-400 rounded p-2"
                 id='matchCode'
                 type="text"
                 value={matchCode}
+                placeholder="Match Code"
                 onChange={(e) => setCode(e.target.value)}
               />
               <button
                 className="bg-blue-500 text-white rounded p-2 mt-2"
-                onClick={() => getOrCreateRound()}
+                onClick={() => getOrCreateRound(matchCode)}
               >
                 Submit
               </button>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <p className="mb-2 mt-2 text-sm text-gray-400">Or choose an existing round from the list below:</p>
+              <RoundList onRoundSelected={(selectedId: string) => {
+                setCode(selectedId);
+                getOrCreateRound(selectedId);
+                }}/>
             </div>
           </div>
         )
@@ -405,9 +418,9 @@ const AdminMatch = () => {
           <ul className="text-left pb-8">
             <li>CTP: ${ctpTotal(players) / 5}</li>
             <li>Bounty: ${bountyTotal(players)}</li>
-            {payouts(teams.length, players.length * 5).map((p, i) => (
+            {/* {payouts(teams.length, players.length * 5).map((p, i) => (
               <li key={i}>Place: {i + 1} Payout: ${p}</li>
-            ))}
+            ))} */}
           </ul>
         </div>
       ))
