@@ -1,30 +1,11 @@
 import { useEffect, useState } from "react";
 import _ from "lodash";
-import { Player } from '../interfaces/Player';
-import { ODD_DOG } from '../constants';
-import { supabase } from '../supabase';
-import RoundList from './RoundList';
-
-
-function ctpTotal(players: Player[]): number {
-  return players.filter(p => p.ctp).length * 5;
-}
-
-function aceTotal(players: Player[]): number {
-  return players.filter(p => p.ace).length * 2;
-}
-
-function bountyTotal(players: Player[]): number {
-  return players.filter(p => p.bounty).length * 3;
-}
-
-function actionTotal(players: Player[]): number {
-  return players.length * 5;
-}
-
-function cashTotal(players: Player[]): number {
-  return ctpTotal(players) + aceTotal(players) + bountyTotal(players) + actionTotal(players);
-}
+import { Player } from "../interfaces/Player";
+import { ODD_DOG } from "../constants";
+import { supabase } from "../supabase";
+import RoundList from "./RoundList";
+import { BuyInConfig } from "../interfaces/BuyInConfig";
+import CashSummary from "./CashSummary";
 
 // function payouts(numTeams: number, total: number): number[] {
 //   const payoutSpots = Math.floor(numTeams * 0.4)
@@ -47,58 +28,52 @@ function cashTotal(players: Player[]): number {
 // }
 
 const Match = () => {
-  const [ matchId, setMatchId ] = useState<number>()
-  const [ matchCode, setCode ] = useState<string>('')
-  const [ players, setPlayers ] = useState<Player[]>(() => {
-    const saved = localStorage.getItem('players');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [ teams, setTeams ] = useState<Player[][]>(() => {
-    const saved = localStorage.getItem('teams');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [matchId, setMatchId] = useState<number>();
+  const [matchCode, setCode] = useState<string>("");
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [teams, setTeams] = useState<Player[][]>([]);
+  const [buyInConfig, setBuyInConfig] = useState<BuyInConfig>({});
+  const [ctps, setCtps] = useState<string>("");
 
-  async function getRound(code: string = '') {
-    // const data = (await supabase.from("round").select().eq('id', matchId)).data;
-    if (code.trim() == '') return;
-    const data = (await supabase.from("round").select().eq('code', code)).data;
-    if (data && data[ 0 ]) {
-      setMatchId(data[ 0 ].id)
-      const roundData = JSON.parse(data[ 0 ].data)
-      setPlayers(roundData.players)
-      setTeams(roundData.teams)
+  async function getRound(code: string = "") {
+    if (code.trim() == "") return;
+    const data = (await supabase.from("round").select().eq("code", code)).data;
+    if (data && data[0]) {
+      setMatchId(data[0].id);
+      const roundData = JSON.parse(data[0].data);
+      setPlayers(roundData.players);
+      setTeams(roundData.teams);
+      setBuyInConfig(roundData.buyInConfig || {});
+      setCtps(roundData.ctps || '');
     }
-    console.log(data)
+    console.log(data);
   }
 
   const handleInserts = (payload: any) => {
-    console.log('Change received!', payload)
-    const id = payload.new.id
-    const data = payload.new.data
+    console.log("Change received!", payload);
+    const id = payload.new.id;
+    const data = payload.new.data;
     if (id === matchId) {
-      setPlayers(data.players)
-      setTeams(data.teams)
+      setPlayers(data.players);
+      setTeams(data.teams);
+      setBuyInConfig(data.buyInConfig || {});
+      setCtps(data.ctps || '');
     }
-  }
+  };
 
   useEffect(() => {
-    // Listen to round updates 
+    // Listen to round updates
     supabase
-      .channel('round_updates')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'round' }, handleInserts)
-      .subscribe()
-  }, [matchId])
+      .channel("round_updates")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "round" },
+        handleInserts
+      )
+      .subscribe();
+  }, [matchId]);
 
-  useEffect(() => {
-    localStorage.setItem('players', JSON.stringify(players));
-  }, [ players ])
-
-  useEffect(() => {
-    localStorage.setItem('teams', JSON.stringify(teams));
-  }, [ teams ])
-
-  return !matchId ?
-  (
+  return !matchId ? (
     <div className="flex flex-col h-screen pb-4">
       <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
       <div className="flex flex-col items-center">
@@ -119,22 +94,23 @@ const Match = () => {
       </div>
       <div className="flex flex-col items-center">
         <p className="mb-2 mt-2">Or select from the list below</p>
-        <RoundList onRoundSelected={(selectedId: string) => {
-          setCode(selectedId);
-          getRound(selectedId);
-        }} />
+        <RoundList
+          onRoundSelected={(selectedId: string) => {
+            setCode(selectedId);
+            getRound(selectedId);
+          }}
+        />
       </div>
     </div>
-  )
-  :
-  (
+  ) : (
     <div className="flex flex-col h-screen pb-4">
       <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
 
       <div className="md:flex md:flex-row">
-
         <div className="md:w-2/3">
-          <h2 className="pb-4 my-4 border-b-2 border-b-grey text-xl font-bold">Registration List</h2>
+          <h2 className="pb-4 my-4 border-b-2 border-b-grey text-xl font-bold">
+            Registration List
+          </h2>
           <table className="table-auto w-full">
             <thead>
               <tr>
@@ -147,81 +123,66 @@ const Match = () => {
               </tr>
             </thead>
             <tbody>
-              {[ ...players ]
-                .map(p =>
-                  <tr key={p.id}>
-                    <td>{p.name}</td>
-                    <td className="">
-                      <input
-                        type='checkbox'
-                        checked={p.ctp}
-                        readOnly />
-                    </td>
-                    <td className="">
-                      <input
-                        type='checkbox'
-                        checked={p.ace}
-                        readOnly />
-                    </td>
-                    <td className="">
-                      <input
-                        type='checkbox'
-                        checked={p.bounty}
-                        readOnly />
-                    </td>
-                    <td className="">
-                      <input
-                        type='checkbox'
-                        checked={p.oddDog}
-                        readOnly />
-                    </td>
-                    <td>
-                    </td>
-                  </tr>
-                )}
+              {[...players].map((p) => (
+                <tr key={p.id}>
+                  <td>{p.name}</td>
+                  <td className="">
+                    <input type="checkbox" checked={p.ctp} readOnly />
+                  </td>
+                  <td className="">
+                    <input type="checkbox" checked={p.ace} readOnly />
+                  </td>
+                  <td className="">
+                    <input type="checkbox" checked={p.bounty} readOnly />
+                  </td>
+                  <td className="">
+                    <input type="checkbox" checked={p.oddDog} readOnly />
+                  </td>
+                  <td></td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       </div>
 
+      {ctps && ctps.length > 0 && (
+        <>
+          <h2 className="pb-4 mt-4  border-b-2 border-b-gray text-xl font-bold">
+            CTPs
+          </h2>
+          <p>{ctps}</p>
+        </>
+      )}
 
-      <h2 className="pb-4 mt-4  border-b-2 border-b-gray text-xl font-bold">Teams</h2>
+      <h2 className="pb-4 mt-4  border-b-2 border-b-gray text-xl font-bold">
+        Teams
+      </h2>
 
-      {teams.length > 0 &&
+      {teams.length > 0 && (
         <>
           <div className="flex flex-wrap justify-center">
-            {[ ...teams ]
-              .sort((a, b) => a[ 0 ].team - b[ 0 ].team)
-              .map(players =>
-                <div className="w-2/5 shadow rounded m-2 p-2" key={players[ 0 ].team}>
-                  <div className='font-bold'>{players[ 0 ].team === ODD_DOG ? "Odd Dog" : players[ 0 ].team}</div>
-                  <div>{players[ 0 ].name}</div>
-                  <div>{players[ 1 ]?.name || ""}</div>
+            {[...teams]
+              .sort((a, b) => a[0].team - b[0].team)
+              .map((players) => (
+                <div
+                  className="w-2/5 shadow rounded m-2 p-2"
+                  key={players[0].team}
+                >
+                  <div className="font-bold">
+                    {players[0].team === ODD_DOG ? "Odd Dog" : players[0].team}
+                  </div>
+                  <div>{players[0].name}</div>
+                  <div>{players[1]?.name || ""}</div>
                 </div>
-              )}
-
+              ))}
           </div>
         </>
-      }
+      )}
 
-      <h2 className="pb-4 my-4 border-b-2 border-b-gray text-xl font-bold">Money Collected</h2>
-      <ul className="text-left">
-        <li>Total CTP: ${ctpTotal(players)}</li>
-        <li>Total Ace: ${aceTotal(players)}</li>
-        <li>Total Bounty: ${bountyTotal(players)}</li>
-        <li>Total Cash: ${cashTotal(players)}</li>
-      </ul>
-
-      <h2 className="pb-4 my-4 border-b-2 border-b-gray text-xl font-bold">Payouts</h2>
-      <ul className="text-left pb-8">
-        <li>CTP: ${ctpTotal(players) / 5}</li>
-        <li>Bounty: ${bountyTotal(players)}</li>
-        {/* {payouts(teams.length, players.length * 5).map((p, i) => (
-          <li key={i}>Place: {i + 1} Payout: ${p}</li>
-        ))} */}
-      </ul>
+      <CashSummary buyInConfig={buyInConfig} players={players} />
     </div>
-  )
-}
+  );
+};
 
 export default Match;
