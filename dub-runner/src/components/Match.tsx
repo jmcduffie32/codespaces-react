@@ -6,7 +6,8 @@ import { supabase } from "../supabase";
 import RoundList from "./RoundList";
 import { BuyInConfig } from "../interfaces/BuyInConfig";
 import CashSummary from "./CashSummary";
-import BuyInSummary from './BuyInSummary';
+import BuyInSummary from "./BuyInSummary";
+import CourseList from './CourseList';
 
 // function payouts(numTeams: number, total: number): number[] {
 //   const payoutSpots = Math.floor(numTeams * 0.4)
@@ -29,6 +30,7 @@ import BuyInSummary from './BuyInSummary';
 // }
 
 const Match = () => {
+  const [currentCourseId, setCurrentCourseId] = useState<number>(1);
   const [matchId, setMatchId] = useState<number>();
   const [matchCode, setCode] = useState<string>("");
   const [players, setPlayers] = useState<Player[]>([]);
@@ -41,11 +43,12 @@ const Match = () => {
     const data = (await supabase.from("round").select().eq("code", code)).data;
     if (data && data[0]) {
       setMatchId(data[0].id);
+      setCurrentCourseId(data[0].course_id);
       const roundData = JSON.parse(data[0].data);
       setPlayers(roundData.players);
       setTeams(roundData.teams);
       setBuyInConfig(roundData.buyInConfig || {});
-      setCtps(roundData.ctps || '');
+      setCtps(roundData.ctps || "");
     }
     console.log(data);
   }
@@ -58,7 +61,7 @@ const Match = () => {
       setPlayers(data.players);
       setTeams(data.teams);
       setBuyInConfig(data.buyInConfig || {});
-      setCtps(data.ctps || '');
+      setCtps(data.ctps || "");
     }
   };
 
@@ -96,6 +99,7 @@ const Match = () => {
       <div className="flex flex-col items-center">
         <p className="mb-2 mt-2">Or select from the list below</p>
         <RoundList
+          currentCourseId={currentCourseId}
           onRoundSelected={(selectedId: string) => {
             setCode(selectedId);
             getRound(selectedId);
@@ -183,7 +187,11 @@ const Match = () => {
         </>
       )}
 
-      <CashSummary buyInConfig={buyInConfig} players={players} ctpCount={ctps.split(',').length}/>
+      <CashSummary
+        buyInConfig={buyInConfig}
+        players={players}
+        ctpCount={ctps.split(",").length}
+      />
     </div>
   );
 };

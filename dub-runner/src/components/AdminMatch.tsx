@@ -8,7 +8,8 @@ import RoundList from "./RoundList";
 import { shuffle } from "../utils/teams";
 import CashSummary from "./CashSummary";
 import { BuyInConfig } from "../interfaces/BuyInConfig";
-import BuyIn from './BuyIn';
+import BuyIn from "./BuyIn";
+import CourseList from "./CourseList";
 
 // function payouts(numTeams: number, total: number): number[] {
 //   const payoutSpots = Math.floor(numTeams * 0.4)
@@ -31,12 +32,12 @@ import BuyIn from './BuyIn';
 // }
 
 const defaultBuyInConfig = {
-    aceBuyIn: 2,
-    actionBuyIn: 5,
-    bountyBuyIn: 3,
-    ctpBuyIn: 5,
-    otherBuyIn: 0,
-  }
+  aceBuyIn: 2,
+  actionBuyIn: 5,
+  bountyBuyIn: 3,
+  ctpBuyIn: 5,
+  otherBuyIn: 0,
+};
 
 const AdminMatch = () => {
   const [username, setUsername] = useState<string>("");
@@ -45,7 +46,9 @@ const AdminMatch = () => {
 
   const [matchId, setMatchId] = useState<number>();
   const [userId, setUserId] = useState<string>();
-  const [buyInConfig, setBuyInConfig] = useState<BuyInConfig>(defaultBuyInConfig);
+  const [buyInConfig, setBuyInConfig] =
+    useState<BuyInConfig>(defaultBuyInConfig);
+  const [courseId, setCourseId] = useState<number>(1); // defaults to Alexander
 
   const [ctps, setCtps] = useState<string>("");
   const [players, setPlayers] = useState<Player[]>([]);
@@ -60,6 +63,7 @@ const AdminMatch = () => {
           .from("round")
           .insert({
             code: code,
+            course_id: courseId,
             data: JSON.stringify({
               players: [],
               teams: [],
@@ -71,6 +75,7 @@ const AdminMatch = () => {
     }
     if (data && data[0]) {
       setMatchId(data[0].id);
+      setCourseId(data[0].course_id);
       const roundData = JSON.parse(data[0].data);
       setPlayers(roundData.players);
       setTeams(roundData.teams);
@@ -90,44 +95,52 @@ const AdminMatch = () => {
       return;
     }
     setUserId(data.user.id);
+    console.log("LOGGED IN", userId, matchId);
   }
 
-  async function updateDB(updatedData: {
-    players: Player[];
-    teams: Player[][];
-    ctps: string;
-    buyInConfig: BuyInConfig;
-  }) {
+  async function updateDB(
+    updatedData: {
+      players: Player[];
+      teams: Player[][];
+      ctps: string;
+      buyInConfig: BuyInConfig;
+    },
+    courseId: number
+  ) {
     await supabase
       .from("round")
-      .update({ data: JSON.stringify(updatedData) })
+      .update({ course_id: courseId, data: JSON.stringify(updatedData) })
       .eq("id", matchId);
   }
 
   const saveState = useCallback(
     debounce(
-      (updatedData: {
-        players: Player[];
-        teams: Player[][];
-        ctps: string;
-        buyInConfig: BuyInConfig;
-      }) => {
+      (
+        updatedData: {
+          players: Player[];
+          teams: Player[][];
+          ctps: string;
+          buyInConfig: BuyInConfig;
+        },
+        courseId: number
+      ) => {
+        console.log(userId, matchId)
         if (!userId || !matchId) return;
-        updateDB(updatedData);
+        console.log("saving state", { updatedData, courseId })
+        updateDB(updatedData, courseId);
       },
       200
     ),
-    []
+    [userId, matchId]
   );
 
   useEffect(() => {
     if (!userId || !matchId) return;
-    console.log("saving state", { teams, players, buyInConfig, ctps })
-    saveState({ teams, players, buyInConfig, ctps });
-  }, [teams, players, buyInConfig, ctps]);
+    saveState({ teams, players, buyInConfig, ctps }, courseId);
+  }, [teams, players, buyInConfig, ctps, courseId]);
 
   function handleConfigUpdate(config: BuyInConfig) {
-    console.log("config changed", config)
+    console.log("config changed", config);
     setBuyInConfig(config);
   }
 
@@ -285,6 +298,7 @@ const AdminMatch = () => {
           Or choose an existing round from the list below:
         </p>
         <RoundList
+          currentCourseId={courseId}
           onRoundSelected={(selectedId: string) => {
             setCode(selectedId);
             getOrCreateRound(selectedId);
@@ -295,7 +309,15 @@ const AdminMatch = () => {
   ) : (
     <div className="flex flex-col h-screen pb-4">
       <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
-       
+
+      <CourseList
+        label="Course"
+        onCourseIdSelected={(id: number) => {
+          setCourseId(id);
+        }}
+        currentCourseId={courseId}
+      />
+
       <BuyIn config={buyInConfig} onConfigUpdate={handleConfigUpdate} />
 
       <div className="md:flex md:flex-row">
@@ -400,7 +422,7 @@ const AdminMatch = () => {
 
         <div className="md:w-2/3">
           <h2 className="pb-4 my-4 border-b-2 border-b-grey text-xl font-bold">
-            Registration List
+            Registration List (Total: {players.length})
           </h2>
           <table className="table-auto w-full">
             <thead>
@@ -490,7 +512,6 @@ const AdminMatch = () => {
         </div>
       </div>
 
-
       <h2 className="pb-4 mt-4  border-b-2 border-b-gray text-xl font-bold">
         Teams
       </h2>
@@ -527,7 +548,11 @@ const AdminMatch = () => {
         </>
       )}
 
-      <CashSummary buyInConfig={buyInConfig} players={players} ctpCount={ctps.split(',').length}/>
+      <CashSummary
+        buyInConfig={buyInConfig}
+        players={players}
+        ctpCount={ctps.split(",").length}
+      />
     </div>
   );
 };
