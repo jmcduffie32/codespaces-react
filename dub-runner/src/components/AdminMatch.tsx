@@ -8,6 +8,7 @@ import RoundList from "./RoundList";
 import { shuffle } from "../utils/teams";
 import CashSummary from "./CashSummary";
 import { BuyInConfig } from "../interfaces/BuyInConfig";
+import BuyIn from './BuyIn';
 
 // function payouts(numTeams: number, total: number): number[] {
 //   const payoutSpots = Math.floor(numTeams * 0.4)
@@ -29,6 +30,14 @@ import { BuyInConfig } from "../interfaces/BuyInConfig";
 //   return [];
 // }
 
+const defaultBuyInConfig = {
+    aceBuyIn: 2,
+    actionBuyIn: 5,
+    bountyBuyIn: 3,
+    ctpBuyIn: 5,
+    otherBuyIn: 0,
+  }
+
 const AdminMatch = () => {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -36,7 +45,7 @@ const AdminMatch = () => {
 
   const [matchId, setMatchId] = useState<number>();
   const [userId, setUserId] = useState<string>();
-  const [buyInConfig, setBuyInConfig] = useState<BuyInConfig>({});
+  const [buyInConfig, setBuyInConfig] = useState<BuyInConfig>(defaultBuyInConfig);
 
   const [ctps, setCtps] = useState<string>("");
   const [players, setPlayers] = useState<Player[]>([]);
@@ -51,7 +60,11 @@ const AdminMatch = () => {
           .from("round")
           .insert({
             code: code,
-            data: JSON.stringify({ players: [], teams: [], buyInConfig: {} }),
+            data: JSON.stringify({
+              players: [],
+              teams: [],
+              buyInConfig: defaultBuyInConfig,
+            }),
           })
           .select()
       ).data;
@@ -109,8 +122,14 @@ const AdminMatch = () => {
 
   useEffect(() => {
     if (!userId || !matchId) return;
+    console.log("saving state", { teams, players, buyInConfig, ctps })
     saveState({ teams, players, buyInConfig, ctps });
   }, [teams, players, buyInConfig, ctps]);
+
+  function handleConfigUpdate(config: BuyInConfig) {
+    console.log("config changed", config)
+    setBuyInConfig(config);
+  }
 
   const [name, setname] = useState("");
   const [ctp, setCtp] = useState(false);
@@ -276,6 +295,8 @@ const AdminMatch = () => {
   ) : (
     <div className="flex flex-col h-screen pb-4">
       <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
+       
+      <BuyIn config={buyInConfig} onConfigUpdate={handleConfigUpdate} />
 
       <div className="md:flex md:flex-row">
         <div className="md:w-1/3 mx-auto ml-0 mr-4">
@@ -469,6 +490,7 @@ const AdminMatch = () => {
         </div>
       </div>
 
+
       <h2 className="pb-4 mt-4  border-b-2 border-b-gray text-xl font-bold">
         Teams
       </h2>
@@ -505,7 +527,7 @@ const AdminMatch = () => {
         </>
       )}
 
-      <CashSummary buyInConfig={buyInConfig} players={players} />
+      <CashSummary buyInConfig={buyInConfig} players={players} ctpCount={ctps.split(',').length}/>
     </div>
   );
 };

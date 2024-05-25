@@ -11,9 +11,11 @@ import {
 function CashSummary({
   buyInConfig,
   players,
+  ctpCount=5
 }: {
   buyInConfig: BuyInConfig;
   players: Player[];
+  ctpCount: number;
 }) {
   return (
     <>
@@ -32,7 +34,7 @@ function CashSummary({
         Payouts
       </h2>
       <ul className="text-left pb-8">
-        <li>CTP: ${ctpTotal(players, buyInConfig) / 5}</li>
+        <li>CTP: ${ctpTotal(players, buyInConfig) / ctpCount}</li>
         <li>Bounty: ${bountyTotal(players, buyInConfig)}</li>
         {/* {payouts(teams.length, players.length * 5).map((p, i) => (
               <li key={i}>Place: {i + 1} Payout: ${p}</li>

@@ -6,6 +6,7 @@ import { supabase } from "../supabase";
 import RoundList from "./RoundList";
 import { BuyInConfig } from "../interfaces/BuyInConfig";
 import CashSummary from "./CashSummary";
+import BuyInSummary from './BuyInSummary';
 
 // function payouts(numTeams: number, total: number): number[] {
 //   const payoutSpots = Math.floor(numTeams * 0.4)
@@ -49,7 +50,7 @@ const Match = () => {
     console.log(data);
   }
 
-  const handleInserts = (payload: any) => {
+  const handleUpdates = (payload: any) => {
     console.log("Change received!", payload);
     const id = payload.new.id;
     const data = payload.new.data;
@@ -68,7 +69,7 @@ const Match = () => {
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "round" },
-        handleInserts
+        handleUpdates
       )
       .subscribe();
   }, [matchId]);
@@ -105,6 +106,8 @@ const Match = () => {
   ) : (
     <div className="flex flex-col h-screen pb-4">
       <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
+
+      <BuyInSummary buyInConfig={buyInConfig} />
 
       <div className="md:flex md:flex-row">
         <div className="md:w-2/3">
@@ -180,7 +183,7 @@ const Match = () => {
         </>
       )}
 
-      <CashSummary buyInConfig={buyInConfig} players={players} />
+      <CashSummary buyInConfig={buyInConfig} players={players} ctpCount={ctps.split(',').length}/>
     </div>
   );
 };
