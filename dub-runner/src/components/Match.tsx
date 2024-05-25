@@ -7,7 +7,6 @@ import RoundList from "./RoundList";
 import { BuyInConfig } from "../interfaces/BuyInConfig";
 import CashSummary from "./CashSummary";
 import BuyInSummary from "./BuyInSummary";
-import CourseList from './CourseList';
 
 // function payouts(numTeams: number, total: number): number[] {
 //   const payoutSpots = Math.floor(numTeams * 0.4)
