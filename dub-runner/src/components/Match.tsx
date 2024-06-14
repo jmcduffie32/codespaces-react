@@ -78,7 +78,7 @@ const Match = () => {
 
   return !matchId ? (
     <div className="flex flex-col h-screen pb-4">
-      <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
+      <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">McDubs</h1>
       <div className="flex flex-col items-center">
         <label className="text-lg font-bold">Enter Match Code</label>
         <input
@@ -108,7 +108,7 @@ const Match = () => {
     </div>
   ) : (
     <div className="flex flex-col h-screen pb-4">
-      <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
+      <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">McDubs</h1>
 
       <BuyInSummary buyInConfig={buyInConfig} />
 

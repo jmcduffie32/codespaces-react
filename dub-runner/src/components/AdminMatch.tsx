@@ -5,28 +5,26 @@ import { Player } from "../interfaces/Player";
 import { ODD_DOG } from "../constants";
 import { supabase } from "../supabase";
 import RoundList from "./RoundList";
-import { shuffle } from "../utils/teams";
+import { assignToHoles, shuffle } from "../utils/teams";
 import CashSummary from "./CashSummary";
 import { BuyInConfig } from "../interfaces/BuyInConfig";
 import BuyIn from "./BuyIn";
 import CourseList from "./CourseList";
 
 // function payouts(numTeams: number, total: number): number[] {
-//   const payoutSpots = Math.floor(numTeams * 0.4)
-//   // const fib = [1, 2, 3, 5, 8, 13, 21];
-//   // _.range(1, payoutSpots + 1).map((s) => 10*fib[s]);
-
-//   switch (payoutSpots) {
+//   switch (numTeams) {
+//     // 1 spot
 //     case 1:
-//       return [ total ];
 //     case 2:
-//       return [ 10, total - 10 ];
 //     case 3:
-//       return [ 10, 20, total - 30 ]
 //     case 4:
-//       return [ 10, 20, 30, total - 60 ]
-//     case 5:
-//       return [ 10, 20, 30, total - 60 ]
+//       return [ total ];
+//     // 2 spots
+//     case 5: // 
+//     case 6:
+//     case 7:
+//       return [ total, total - 10 ]
+//     // 3 spots
 //   }
 //   return [];
 // }
@@ -40,24 +38,24 @@ const defaultBuyInConfig = {
 };
 
 const AdminMatch = () => {
-  const [username, setUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [matchCode, setCode] = useState<string>("");
+  const [ username, setUsername ] = useState<string>("");
+  const [ password, setPassword ] = useState<string>("");
+  const [ matchCode, setCode ] = useState<string>("");
 
-  const [matchId, setMatchId] = useState<number>();
-  const [userId, setUserId] = useState<string>();
-  const [buyInConfig, setBuyInConfig] =
+  const [ matchId, setMatchId ] = useState<number>();
+  const [ userId, setUserId ] = useState<string>();
+  const [ buyInConfig, setBuyInConfig ] =
     useState<BuyInConfig>(defaultBuyInConfig);
-  const [courseId, setCourseId] = useState<number>(1); // defaults to Alexander
+  const [ courseId, setCourseId ] = useState<number>(1); // defaults to Alexander
 
-  const [ctps, setCtps] = useState<string>("");
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [teams, setTeams] = useState<Player[][]>([]);
+  const [ ctps, setCtps ] = useState<string>("");
+  const [ players, setPlayers ] = useState<Player[]>([]);
+  const [ teams, setTeams ] = useState<Player[][]>([]);
 
   async function getOrCreateRound(code: string = "") {
     if (code.trim() == "") return;
     let data = (await supabase.from("round").select().eq("code", code)).data;
-    if (!data || !data[0]) {
+    if (!data || !data[ 0 ]) {
       data = (
         await supabase
           .from("round")
@@ -73,10 +71,10 @@ const AdminMatch = () => {
           .select()
       ).data;
     }
-    if (data && data[0]) {
-      setMatchId(data[0].id);
-      setCourseId(data[0].course_id);
-      const roundData = JSON.parse(data[0].data);
+    if (data && data[ 0 ]) {
+      setMatchId(data[ 0 ].id);
+      setCourseId(data[ 0 ].course_id);
+      const roundData = JSON.parse(data[ 0 ].data);
       setPlayers(roundData.players);
       setTeams(roundData.teams);
       setBuyInConfig(roundData.buyInConfig || {});
@@ -131,24 +129,24 @@ const AdminMatch = () => {
       },
       200
     ),
-    [userId, matchId]
+    [ userId, matchId ]
   );
 
   useEffect(() => {
     if (!userId || !matchId) return;
     saveState({ teams, players, buyInConfig, ctps }, courseId);
-  }, [teams, players, buyInConfig, ctps, courseId]);
+  }, [ teams, players, buyInConfig, ctps, courseId ]);
 
   function handleConfigUpdate(config: BuyInConfig) {
     console.log("config changed", config);
     setBuyInConfig(config);
   }
 
-  const [name, setname] = useState("");
-  const [ctp, setCtp] = useState(false);
-  const [ace, setAce] = useState(false);
-  const [bounty, setBounty] = useState(false);
-  const [oddDog, setOddDog] = useState(false);
+  const [ name, setname ] = useState("");
+  const [ ctp, setCtp ] = useState(false);
+  const [ ace, setAce ] = useState(false);
+  const [ bounty, setBounty ] = useState(false);
+  const [ oddDog, setOddDog ] = useState(false);
 
   function reset() {
     setname("");
@@ -208,7 +206,7 @@ const AdminMatch = () => {
     const wantPartners = shuffle(players.filter((p) => !p.oddDog));
 
     for (let i = 0; i < wantPartners.length; i++) {
-      wantPartners[i].team = shuffled[i] || ODD_DOG;
+      wantPartners[ i ].team = shuffled[ i ] || ODD_DOG;
     }
 
     const remaining = shuffled.slice(wantPartners.length);
@@ -222,7 +220,7 @@ const AdminMatch = () => {
     const wantOddDog = players.filter((p) => p.oddDog);
 
     for (let i = 0; i < wantOddDog.length; i++) {
-      wantOddDog[i].team = oddDogIn[i];
+      wantOddDog[ i ].team = oddDogIn[ i ];
     }
 
     const sortedPlayers = wantPartners
@@ -239,7 +237,7 @@ const AdminMatch = () => {
 
   return !userId ? ( // show login form
     <div className="flex flex-col h-screen pb-4">
-      <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
+      <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">McDubs</h1>
       <div className="flex flex-col items-center justify-center h-full">
         <input
           className="mb-4 px-4 py-2 border border-gray-300 rounded"
@@ -271,7 +269,7 @@ const AdminMatch = () => {
     </div>
   ) : !matchId ? (
     <div className="flex flex-col h-screen pb-4">
-      <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
+      <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">McDubs</h1>
       <div className="flex flex-col items-center">
         <label className="text-lg font-bold">Enter Match Code</label>
         <p className="mt-2 mb-2 text-sm text-gray-400">
@@ -308,7 +306,7 @@ const AdminMatch = () => {
     </div>
   ) : (
     <div className="flex flex-col h-screen pb-4">
-      <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">DUBS</h1>
+      <h1 className="bg-blue-500 text-white -mt-8 mb-4 -mx-8 py-2">McDubs</h1>
 
       <CourseList
         label="Course"
@@ -436,7 +434,7 @@ const AdminMatch = () => {
               </tr>
             </thead>
             <tbody>
-              {[...players].map((p) => (
+              {[ ...players ].map((p) => (
                 <tr key={p.id}>
                   <td>{p.name}</td>
                   <td className="">
@@ -530,20 +528,45 @@ const AdminMatch = () => {
       {teams.length > 0 && (
         <>
           <div className="flex flex-wrap justify-center">
-            {[...teams]
-              .sort((a, b) => a[0].team - b[0].team)
+            {[ ...teams ]
+              .sort((a, b) => a[ 0 ].team - b[ 0 ].team)
               .map((players) => (
                 <div
                   className="w-2/5 shadow rounded m-2 p-2"
-                  key={players[0].team}
+                  key={players[ 0 ].team}
                 >
                   <div className="font-bold">
-                    {players[0].team === ODD_DOG ? "Odd Dog" : players[0].team}
+                    {players[ 0 ].team === ODD_DOG ? "Odd Dog" : players[ 0 ].team}
                   </div>
-                  <div>{players[0].name}</div>
-                  <div>{players[1]?.name || ""}</div>
+                  <div>{players[ 0 ].name}</div>
+                  <div>{players[ 1 ]?.name || ""}</div>
                 </div>
               ))}
+          </div>
+          <hr className="mt-8" />
+          <div className="mt-8 flex flex-col">
+            {Object.entries(assignToHoles(
+              teams.filter((t) => t[ 0 ].team !== ODD_DOG),
+              teams.filter((t) => t[ 0 ].team === ODD_DOG)
+            )).map(([ hole, teams ]) => (
+              <>
+                <div key={hole} className="rounded w-1/2 mx-auto">
+                  <div className="font-bold text-lg">
+                    {hole}
+                  </div>
+                {teams.map((players) => (
+                  <div
+                    className="shadow rounded m-2 p-2"
+                    key={players[ 0 ].team}
+                  >
+                    <div>{players[ 0 ].name} {players[ 0 ].team === ODD_DOG ? <span className="underline italic">Odd Dog</span> : ""}</div>
+                    <div>{players[ 1 ]?.name || ""}</div>
+                  </div>
+
+                ))}
+                </div>
+              </>
+            ))}
           </div>
         </>
       )}
