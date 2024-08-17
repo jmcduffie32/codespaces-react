@@ -559,7 +559,7 @@ const AdminMatch = () => {
                     className="shadow rounded m-2 p-2"
                     key={players[ 0 ].team}
                   >
-                    <div>{players[ 0 ].name} {players[ 0 ].team === ODD_DOG ? <span className="underline italic">Odd Dog</span> : ""}</div>
+                    <div>{players[ 0 ]?.name} {players[ 0 ].team === ODD_DOG ? <span className="underline italic">Odd Dog</span> : ""}</div>
                     <div>{players[ 1 ]?.name || ""}</div>
                   </div>
 
