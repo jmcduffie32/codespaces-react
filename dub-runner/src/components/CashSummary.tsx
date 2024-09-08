@@ -6,6 +6,7 @@ import {
   bountyTotal,
   otherTotal,
   cashTotal,
+  recommenedPayout
 } from "../utils/payout";
 
 function CashSummary({
@@ -36,9 +37,10 @@ function CashSummary({
       <ul className="text-left pb-8">
         <li>CTP: ${ctpTotal(players, buyInConfig) / ctpCount}</li>
         <li>Bounty: ${bountyTotal(players, buyInConfig)}</li>
-        {/* {payouts(teams.length, players.length * 5).map((p, i) => (
-              <li key={i}>Place: {i + 1} Payout: ${p}</li>
-            ))} */}
+        <hr className='my-2'/>
+        {recommenedPayout(players, buyInConfig).map((p, i) => (
+              <li key={i}>Place {i + 1}: Payout: ${p}</li>
+          ))}
       </ul>
     </>
   );
