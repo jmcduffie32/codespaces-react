@@ -38,7 +38,7 @@ function CashSummary({
         <li>CTP: ${ctpTotal(players, buyInConfig) / ctpCount}</li>
         <li>Bounty: ${bountyTotal(players, buyInConfig)}</li>
         <hr className='my-2'/>
-        {recommenedPayout(players, buyInConfig).map((p, i) => (
+        {recommenedPayout(players, buyInConfig)?.map((p, i) => (
               <li key={i}>Place {i + 1}: Payout: ${p}</li>
           ))}
       </ul>

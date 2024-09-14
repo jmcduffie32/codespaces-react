@@ -85,5 +85,5 @@ export function recommenedPayout(
     '27': [11, 7, 4, 3, 2],
     '28': [11, 7, 5, 3, 2],
   }
-  return payoutConfig['' + players.length].map(v => v * (buyInConfig?.actionBuyIn || 5)) || [];
+  return payoutConfig['' + players.length]?.map(v => v * (buyInConfig?.actionBuyIn || 5)) || [];
 }
