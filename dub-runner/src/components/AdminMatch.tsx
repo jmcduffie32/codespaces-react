@@ -1,33 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
-import _, { debounce } from "lodash";
+import { debounce } from "lodash";
 import { XCircleIcon } from "@heroicons/react/24/outline";
 import { Player } from "../interfaces/Player";
 import { ODD_DOG } from "../constants";
 import { supabase } from "../supabase";
 import RoundList from "./RoundList";
-import { assignToHoles, shuffle } from "../utils/teams";
+import { assignTeams, assignToHoles } from "../utils/teams";
 import CashSummary from "./CashSummary";
 import { BuyInConfig } from "../interfaces/BuyInConfig";
 import BuyIn from "./BuyIn";
 import CourseList from "./CourseList";
-
-// function payouts(numTeams: number, total: number): number[] {
-//   switch (numTeams) {
-//     // 1 spot
-//     case 1:
-//     case 2:
-//     case 3:
-//     case 4:
-//       return [ total ];
-//     // 2 spots
-//     case 5: // 
-//     case 6:
-//     case 7:
-//       return [ total, total - 10 ]
-//     // 3 spots
-//   }
-//   return [];
-// }
 
 const defaultBuyInConfig = {
   aceBuyIn: 2,
@@ -178,61 +160,6 @@ const AdminMatch = () => {
 
   function removePlayer(id: string): void {
     setPlayers((players) => players.filter((p) => p.id != id));
-  }
-
-  function assignTeams(players: Player[]): void {
-    const playerCount = players.length;
-    let oddDogCount: number = 0;
-    switch (playerCount % 4) {
-      case 0:
-        oddDogCount = 0;
-        break;
-      case 1:
-      case 3:
-        oddDogCount = 1;
-        break;
-      case 2:
-        oddDogCount = 2;
-        break;
-    }
-
-    const numbers = []; // playerCount - oddDogCount
-    for (let i = 1; i <= (playerCount - oddDogCount) / 2; i++) {
-      numbers.push(i);
-      numbers.push(i);
-    }
-    const shuffled = shuffle(numbers);
-
-    const wantPartners = shuffle(players.filter((p) => !p.oddDog));
-
-    for (let i = 0; i < wantPartners.length; i++) {
-      wantPartners[ i ].team = shuffled[ i ] || ODD_DOG;
-    }
-
-    const remaining = shuffled.slice(wantPartners.length);
-
-    for (let i = oddDogCount; i > 0; i--) {
-      remaining.push(ODD_DOG);
-    }
-
-    const oddDogIn = shuffle(remaining);
-
-    const wantOddDog = players.filter((p) => p.oddDog);
-
-    for (let i = 0; i < wantOddDog.length; i++) {
-      wantOddDog[ i ].team = oddDogIn[ i ];
-    }
-
-    const sortedPlayers = wantPartners
-      .concat(wantOddDog)
-      .sort((a, b) => b.team - a.team);
-
-    const teams = _.map(
-      _.groupBy(sortedPlayers, (p) => p.team),
-      (players, _team) => players
-    );
-
-    setTeams(teams);
   }
 
   return !userId ? ( // show login form
@@ -517,7 +444,7 @@ const AdminMatch = () => {
         <button
           type="button"
           onClick={() => {
-            assignTeams(players);
+            setTeams(assignTeams(players));
           }}
           className="bg-blue-500 text-white w-full py-1 px-4 rounded"
         >

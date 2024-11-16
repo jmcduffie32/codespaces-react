@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import _ from "lodash";
 import { Player } from "../interfaces/Player";
 import { ODD_DOG } from "../constants";
 import { supabase } from "../supabase";
@@ -7,26 +6,6 @@ import RoundList from "./RoundList";
 import { BuyInConfig } from "../interfaces/BuyInConfig";
 import CashSummary from "./CashSummary";
 import BuyInSummary from "./BuyInSummary";
-
-// function payouts(numTeams: number, total: number): number[] {
-//   const payoutSpots = Math.floor(numTeams * 0.4)
-//   // const fib = [1, 2, 3, 5, 8, 13, 21];
-//   // _.range(1, payoutSpots + 1).map((s) => 10*fib[s]);
-
-//   switch (payoutSpots) {
-//     case 1:
-//       return [ total ];
-//     case 2:
-//       return [ 10, total - 10 ];
-//     case 3:
-//       return [ 10, 20, total - 30 ]
-//     case 4:
-//       return [ 10, 20, 30, total - 60 ]
-//     case 5:
-//       return [ 10, 20, 30, total - 60 ]
-//   }
-//   return [];
-// }
 
 const Match = () => {
   const [currentCourseId, setCurrentCourseId] = useState<number>(1);
